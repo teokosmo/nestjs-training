@@ -3,11 +3,11 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
   Param,
   Patch,
   Post,
 } from '@nestjs/common';
-import { identity } from 'rxjs';
 
 @Controller('/events')
 export class EventsController {
@@ -20,14 +20,17 @@ export class EventsController {
   }
   @Get(':id')
   findOne(@Param('id') id) {
-    return id;
+    return { id: 1, name: 'first event' };
   }
   @Post()
   create(@Body() input) {
     return input;
   }
   @Patch(':id')
-  update(@Param('id') id, @Body() input) {}
+  update(@Param('id') id, @Body() input) {
+    return input;
+  }
   @Delete(':id')
+  @HttpCode(204)
   remove(@Param('id') id) {}
 }
