@@ -9,6 +9,7 @@ export class AppService {
     private readonly message: string,
   ) {}
   getHello(): string {
+    // console.log(process.env);
     return `Hello World! ${this.name}, ${this.message}`;
   }
 }
