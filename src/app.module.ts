@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AppDummy } from './app-dummy';
 import { AppGreekService } from './app-greek.service';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -30,6 +31,12 @@ import { EventsModule } from './events/events.module';
       provide: 'APP_NAME',
       useValue: 'Nest Events Backend!',
     },
+    {
+      provide: 'MESSAGE',
+      inject: [AppDummy],
+      useFactory: (app) => `${app.dummy()} Factory!`,
+    },
+    AppDummy,
   ],
 })
 export class AppModule {}
