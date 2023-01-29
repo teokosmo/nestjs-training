@@ -5,6 +5,7 @@ import {
   Get,
   HttpCode,
   Logger,
+  NotFoundException,
   Param,
   ParseIntPipe,
   Patch,
@@ -41,25 +42,30 @@ export class EventsController {
       where: [
         {
           id: MoreThan(3),
-          when: MoreThan(new Date('2021-02-01T10:00:00'))
+          when: MoreThan(new Date('2021-02-01T10:00:00')),
         },
         {
-          description: Like('%meet%')
-        }
+          description: Like('%meet%'),
+        },
       ],
       take: 2,
       // skip: 1,
       order: {
-        id: 'DESC'
-      }
+        id: 'DESC',
+      },
     });
   }
 
   @Get(':id')
   async findOne(@Param('id', ParseIntPipe) id) {
     console.log(typeof id);
-    // return { id: 1, name: 'first event' };
-    return await this.repository.findOneBy({ id });
+    const event = await this.repository.findOneBy({ id });
+
+    if (!event) {
+      throw new NotFoundException();
+    }
+
+    return event;
   }
 
   @Post()
@@ -74,6 +80,10 @@ export class EventsController {
   async update(@Param('id') id, @Body() input: UpdateEventDto) {
     const event = await this.repository.findOneBy({ id });
 
+    if (!event) {
+      throw new NotFoundException();
+    }
+
     return await this.repository.save({
       ...event,
       ...input,
@@ -85,6 +95,11 @@ export class EventsController {
   @HttpCode(204)
   async remove(@Param('id') id) {
     const event = await this.repository.findOneBy({ id });
+
+    if (!event) {
+      throw new NotFoundException();
+    }
+
     await this.repository.remove(event);
   }
 }
