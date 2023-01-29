@@ -24,7 +24,11 @@ import { EventsModule } from './events/events.module';
   providers: [
     {
       provide: AppService,
-      useClass: AppGreekService,
+      useClass: AppService,
+    },
+    {
+      provide: 'APP_NAME',
+      useValue: 'Nest Events Backend!',
     },
   ],
 })
