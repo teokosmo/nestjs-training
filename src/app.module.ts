@@ -5,21 +5,21 @@ import { AppDummy } from './app-dummy';
 import { AppGreekService } from './app-greek.service';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import ormConfig from './config/orm.config';
+import ormConfigProd from './config/orm.config.prod';
 import { Event } from './events/event.entity';
 import { EventsModule } from './events/events.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot(),
-    TypeOrmModule.forRoot({
-      type: 'mysql',
-      host: process.env.DB_HOST,
-      port: Number(process.env.DB_PORT),
-      username: process.env.DB_USER,
-      password: process.env.DB_PASSWORD,
-      database: process.env.DB_NAME,
-      entities: [Event],
-      synchronize: true,
+    ConfigModule.forRoot({
+      isGlobal: true,
+      load: [ormConfig],
+      expandVariables: true
+    }),
+    TypeOrmModule.forRootAsync({
+      useFactory: process.env.NODE_ENV !== 'production'
+        ? ormConfig : ormConfigProd
     }),
     EventsModule,
   ],
