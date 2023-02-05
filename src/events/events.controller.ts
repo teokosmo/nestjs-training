@@ -35,6 +35,14 @@ export class EventsController {
     return events;
   }
 
+  @Get('practice2')
+  async practice2() {
+    return await this.repository.findOne({
+      where: { id: 1 },
+      relations: ['attendees'],
+    });
+  }
+
   @Get('/practice')
   async practice() {
     return await this.repository.find({
