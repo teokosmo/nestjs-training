@@ -18,6 +18,8 @@ export class Event {
   @Column()
   when: Date;
 
-  @OneToMany(() => Attendee, (attendee) => attendee.event)
+  @OneToMany(() => Attendee, (attendee) => attendee.event, {
+    cascade: true
+  })
   attendees: Attendee[];
 }

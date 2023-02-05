@@ -17,6 +17,7 @@ import { UpdateEventDto } from './update-event.dto';
 import { Event } from './event.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MoreThan, Repository, Like } from 'typeorm';
+import { Attendee } from './attendee.entity';
 
 @Controller('/events')
 export class EventsController {
@@ -37,10 +38,18 @@ export class EventsController {
 
   @Get('practice2')
   async practice2() {
-    return await this.repository.findOne({
+    const event = await this.repository.findOne({
       where: { id: 1 },
       relations: ['attendees'],
     });
+
+    const attendee = new Attendee();
+    attendee.name = 'Attende using cascade';
+
+    event.attendees.push(attendee);
+    await this.repository.save(event);
+
+    return event;
   }
 
   @Get('/practice')

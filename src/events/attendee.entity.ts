@@ -16,7 +16,7 @@ export class Attendee {
   name: string;
 
   @ManyToOne(() => Event, (event) => event.attendees, {
-    nullable: false
+    nullable: true
   })
   @JoinColumn()
   event: Event;
