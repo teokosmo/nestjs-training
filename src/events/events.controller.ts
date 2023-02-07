@@ -10,15 +10,17 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Query,
   ValidationPipe,
 } from '@nestjs/common';
-import { CreateEventDto } from './create-event.dto';
-import { UpdateEventDto } from './update-event.dto';
+import { CreateEventDto } from './input/create-event.dto';
+import { UpdateEventDto } from './input/update-event.dto';
 import { Event } from './event.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MoreThan, Repository, Like } from 'typeorm';
 import { Attendee } from './attendee.entity';
 import { EventsService } from './events.service';
+import { ListEvents } from './input/list.events';
 
 @Controller('/events')
 export class EventsController {
@@ -31,9 +33,12 @@ export class EventsController {
   ) {}
 
   @Get()
-  async findAll() {
+  async findAll(@Query() filter: ListEvents) {
+    this.logger.debug(filter);
     this.logger.log(`findAll route`);
-    const events = await this.repository.find();
+    const events = await this.eventsService.getEventsWithAttendeeCountFiltered(
+      filter,
+    );
     this.logger.debug(`Found ${events.length} events`);
     return events;
   }
