@@ -18,7 +18,7 @@ export class TrainingController {
     // const subject = new Subject();
     // subject.name = 'Math';
 
-    const subject = await this.subjectRepository.findOneBy({ id: 3 });
+    const subject = await this.subjectRepository.findOneBy({ id: 2 });
 
     // const teacher1 = new Teacher();
     // teacher1.name = 'John Doe';
@@ -27,7 +27,7 @@ export class TrainingController {
     // teacher2.name = 'Harry Doe';
 
     // subject.teachers = [teacher1, teacher2];
-    await this.subjectRepository.save(subject);
+    // await this.subjectRepository.save(subject);
 
     // How to use One to One
     // const user = new User();
@@ -37,8 +37,8 @@ export class TrainingController {
     // user.profile = null;
     // Save the user here
 
-    const teacher1 = await this.teacherRepository.findOneBy({ id: 5 });
-    const teacher2 = await this.teacherRepository.findOneBy({ id: 6 });
+    const teacher1 = await this.teacherRepository.findOneBy({ id: 3 });
+    const teacher2 = await this.teacherRepository.findOneBy({ id: 4 });
 
     return await this.subjectRepository
       .createQueryBuilder()
