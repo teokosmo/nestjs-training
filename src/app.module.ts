@@ -5,6 +5,7 @@ import { AppDummy } from './app-dummy';
 import { AppGreekService } from './app-greek.service';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { AuthModule } from './auth/auth.module';
 import ormConfig from './config/orm.config';
 import ormConfigProd from './config/orm.config.prod';
 import { Event } from './events/event.entity';
@@ -24,6 +25,7 @@ import { SchoolModule } from './school/school.module';
     }),
     EventsModule,
     SchoolModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [
