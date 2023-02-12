@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   HttpCode,
   Logger,
@@ -31,11 +32,7 @@ import { AuthGuardJwt } from 'src/auth/auth-guard.jwt';
 export class EventsController {
   private readonly logger = new Logger(EventsController.name);
 
-  constructor(
-    @InjectRepository(Event)
-    private readonly repository: Repository<Event>,
-    private readonly eventsService: EventsService,
-  ) {}
+  constructor(private readonly eventsService: EventsService) {}
 
   @Get()
   @UsePipes(new ValidationPipe({ transform: true }))
@@ -53,7 +50,7 @@ export class EventsController {
     return events;
   }
 
-  @Get('practice2')
+/*   @Get('practice2')
   async practice2() {
     const event = await this.repository.findOne({
       where: { id: 1 },
@@ -88,12 +85,11 @@ export class EventsController {
         id: 'DESC',
       },
     });
-  }
+  } */
 
   @Get(':id')
   async findOne(@Param('id', ParseIntPipe) id) {
     console.log(typeof id);
-    // const event = await this.repository.findOneBy({ id });
     const event = await this.eventsService.getEvent(id);
 
     if (!event) {
@@ -110,27 +106,46 @@ export class EventsController {
   }
 
   @Patch(':id')
-  async update(@Param('id') id, @Body() input: UpdateEventDto) {
-    const event = await this.repository.findOneBy({ id });
+  @UseGuards(AuthGuardJwt)
+  async update(
+    @Param('id') id,
+    @Body() input: UpdateEventDto,
+    @CurrentUser() user: User,
+  ) {
+    const event = await this.eventsService.getEvent(id);
 
     if (!event) {
       throw new NotFoundException();
     }
 
-    return await this.repository.save({
-      ...event,
-      ...input,
-      when: input.when ? new Date(input.when) : event.when,
-    });
+    if (event.organizerId !== user.id) {
+      throw new ForbiddenException(
+        null,
+        `You are not authorized to change this event`,
+      );
+    }
+
+    return await this.eventsService.updateEvent(event, input);
   }
 
   @Delete(':id')
+  @UseGuards(AuthGuardJwt)
   @HttpCode(204)
-  async remove(@Param('id') id) {
-    const result = await this.eventsService.deleteEvent(id);
+  async remove(@Param('id') id, @CurrentUser() user: User) {
 
-    if (result?.affected !== 1) {
+    const event = await this.eventsService.getEvent(id);
+
+    if (!event) {
       throw new NotFoundException();
     }
+
+    if (event.organizerId !== user.id) {
+      throw new ForbiddenException(
+        null,
+        `You are not authorized to remove this event`,
+      );
+    }
+
+    await this.eventsService.deleteEvent(id);
   }
 }
