@@ -1,4 +1,4 @@
-import { Logger, Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/auth/user.entity';
 import { paginate, PaginateOptions } from 'src/pagination/paginator';
@@ -37,15 +37,6 @@ export class EventsService {
           }),
       )
       .loadRelationCountAndMap(
-        'e.attendeeRejected',
-        'e.attendees',
-        'attendee',
-        (qb) =>
-          qb.where('attendee.answer = :answer', {
-            answer: AttendeeAnswerEnum.Rejected,
-          }),
-      )
-      .loadRelationCountAndMap(
         'e.attendeeMaybe',
         'e.attendees',
         'attendee',
@@ -53,18 +44,16 @@ export class EventsService {
           qb.where('attendee.answer = :answer', {
             answer: AttendeeAnswerEnum.Maybe,
           }),
+      )
+      .loadRelationCountAndMap(
+        'e.attendeeRejected',
+        'e.attendees',
+        'attendee',
+        (qb) =>
+          qb.where('attendee.answer = :answer', {
+            answer: AttendeeAnswerEnum.Rejected,
+          }),
       );
-  }
-
-  public async getEvent(id: number): Promise<Event | undefined> {
-    const query = this.getEventsWithAttendeeCountQuery().andWhere(
-      'e.id = :id',
-      { id },
-    );
-
-    this.logger.debug(query.getSql());
-
-    return await query.getOne();
   }
 
   private async getEventsWithAttendeeCountFiltered(filter?: ListEvents) {
@@ -98,28 +87,38 @@ export class EventsService {
       }
     }
 
-    return await query;
+    return query;
   }
 
   public async getEventsWithAttendeeCountFilteredPaginated(
     filter: ListEvents,
-    paginateOptions: PaginateOptions
+    paginateOptions: PaginateOptions,
   ): Promise<PaginatedEvents> {
     return await paginate(
       await this.getEventsWithAttendeeCountFiltered(filter),
-      paginateOptions
+      paginateOptions,
     );
+  }
+
+  public async getEvent(id: number): Promise<Event | undefined> {
+    const query = this.getEventsWithAttendeeCountQuery().andWhere(
+      'e.id = :id',
+      { id },
+    );
+
+    this.logger.debug(query.getSql());
+
+    return await query.getOne();
   }
 
   public async createEvent(input: CreateEventDto, user: User): Promise<Event> {
     return await this.eventsRepository.save({
       ...input,
       organizer: user,
-      when: new Date(input.when)
+      when: new Date(input.when),
     });
   }
 
-  
   public async updateEvent(
     event: Event,
     input: UpdateEventDto,
@@ -127,7 +126,7 @@ export class EventsService {
     return await this.eventsRepository.save({
       ...event,
       ...input,
-      when: input.when ? new Date(input.when) : event.when
+      when: input.when ? new Date(input.when) : event.when,
     });
   }
 
@@ -145,7 +144,7 @@ export class EventsService {
   ): Promise<PaginatedEvents> {
     return await paginate<Event>(
       this.getEventsOrganizedByUserIdQuery(userId),
-      paginateOptions
+      paginateOptions,
     );
   }
 
@@ -153,5 +152,21 @@ export class EventsService {
     return this.getEventsBaseQuery().where('e.organizerId = :userId', {
       userId,
     });
+  }
+
+  public async getEventsAttendedByUserIdPaginated(
+    userId: number,
+    paginateOptions: PaginateOptions,
+  ): Promise<PaginatedEvents> {
+    return await paginate<Event>(
+      this.getEventsAttendedByUserIdQuery(userId),
+      paginateOptions,
+    );
+  }
+
+  private getEventsAttendedByUserIdQuery(userId: number) {
+    return this.getEventsBaseQuery()
+      .leftJoinAndSelect('e.attendees', 'a')
+      .where('a.userId = :userId', { userId });
   }
 }
