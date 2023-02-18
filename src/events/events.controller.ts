@@ -19,13 +19,13 @@ import {
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
-import { CreateEventDto } from './input/create-event.dto';
-import { UpdateEventDto } from './input/update-event.dto';
-import { EventsService } from './events.service';
-import { ListEvents } from './input/list.events';
-import { User } from 'src/auth/user.entity';
-import { CurrentUser } from 'src/auth/current-user.decorator';
 import { AuthGuardJwt } from 'src/auth/auth-guard.jwt';
+import { CurrentUser } from 'src/auth/current-user.decorator';
+import { User } from 'src/auth/user.entity';
+import { EventsService } from './events.service';
+import { CreateEventDto } from './input/create-event.dto';
+import { ListEvents } from './input/list.events';
+import { UpdateEventDto } from './input/update-event.dto';
 
 @Controller('/events')
 @SerializeOptions({ strategy: 'excludeAll' })
@@ -35,10 +35,9 @@ export class EventsController {
   constructor(private readonly eventsService: EventsService) {}
 
   @Get()
-  @UseInterceptors(ClassSerializerInterceptor)
   @UsePipes(new ValidationPipe({ transform: true }))
+  @UseInterceptors(ClassSerializerInterceptor)
   async findAll(@Query() filter: ListEvents) {
-    this.logger.log(`findAll route`);
     const events =
       await this.eventsService.getEventsWithAttendeeCountFilteredPaginated(
         filter,
@@ -51,47 +50,60 @@ export class EventsController {
     return events;
   }
 
-/*   @Get('practice2')
-  async practice2() {
-    const event = await this.repository.findOne({
-      where: { id: 1 },
-      relations: ['attendees'],
-    });
+  // @Get('/practice')
+  // async practice() {
+  //   // return await this.repository.find({
+  //   //   select: ['id', 'when'],
+  //   //   where: [{
+  //   //     id: MoreThan(3),
+  //   //     when: MoreThan(new Date('2021-02-12T13:00:00'))
+  //   //   }, {
+  //   //     description: Like('%meet%')
+  //   //   }],
+  //   //   take: 2,
+  //   //   order: {
+  //   //     id: 'DESC'
+  //   //   }
+  //   // });
+  // }
 
-    const attendee = new Attendee();
-    attendee.name = 'Attende using cascade';
+  // @Get('practice2')
+  // async practice2() {
+  //   // // return await this.repository.findOne(
+  //   // //   1,
+  //   // //   { relations: ['attendees'] }
+  //   // // );
+  //   // const event = await this.repository.findOne(
+  //   //   1,
+  //   //   { relations: ['attendees'] }
+  //   // );
+  //   // // const event = new Event();
+  //   // // event.id = 1;
 
-    event.attendees.push(attendee);
-    await this.repository.save(event);
+  //   // const attendee = new Attendee();
+  //   // attendee.name = 'Using cascade';
+  //   // // attendee.event = event;
 
-    return event;
-  }
+  //   // event.attendees.push(attendee);
+  //   // // event.attendees = [];
 
-  @Get('/practice')
-  async practice() {
-    return await this.repository.find({
-      select: ['id', 'when'],
-      where: [
-        {
-          id: MoreThan(3),
-          when: MoreThan(new Date('2021-02-01T10:00:00')),
-        },
-        {
-          description: Like('%meet%'),
-        },
-      ],
-      take: 2,
-      // skip: 1,
-      order: {
-        id: 'DESC',
-      },
-    });
-  } */
+  //   // // await this.attendeeRepository.save(attendee);
+  //   // await this.repository.save(event);
+
+  //   // return event;
+
+  //   // return await this.repository.createQueryBuilder('e')
+  //   //   .select(['e.id', 'e.name'])
+  //   //   .orderBy('e.id', 'ASC')
+  //   //   .take(3)
+  //   //   .getMany();
+  // }
 
   @Get(':id')
   @UseInterceptors(ClassSerializerInterceptor)
-  async findOne(@Param('id', ParseIntPipe) id) {
-    const event = await this.eventsService.getEvent(id);
+  async findOne(@Param('id', ParseIntPipe) id: number) {
+    // console.log(typeof id);
+    const event = await this.eventsService.getEventWithAttendeeCount(id);
 
     if (!event) {
       throw new NotFoundException();
@@ -100,6 +112,9 @@ export class EventsController {
     return event;
   }
 
+  // You can also use the @UsePipes decorator to enable pipes.
+  // It can be done per method, or for every method when you
+  // add it at the controller level.
   @Post()
   @UseGuards(AuthGuardJwt)
   @UseInterceptors(ClassSerializerInterceptor)
@@ -107,15 +122,17 @@ export class EventsController {
     return await this.eventsService.createEvent(input, user);
   }
 
+  // Create new ValidationPipe to specify validation group inside @Body
+  // new ValidationPipe({ groups: ['update'] })
   @Patch(':id')
   @UseGuards(AuthGuardJwt)
   @UseInterceptors(ClassSerializerInterceptor)
   async update(
-    @Param('id') id,
+    @Param('id', ParseIntPipe) id,
     @Body() input: UpdateEventDto,
     @CurrentUser() user: User,
   ) {
-    const event = await this.eventsService.getEvent(id);
+    const event = await this.eventsService.findOne(id);
 
     if (!event) {
       throw new NotFoundException();
@@ -134,9 +151,8 @@ export class EventsController {
   @Delete(':id')
   @UseGuards(AuthGuardJwt)
   @HttpCode(204)
-  async remove(@Param('id') id, @CurrentUser() user: User) {
-
-    const event = await this.eventsService.getEvent(id);
+  async remove(@Param('id', ParseIntPipe) id, @CurrentUser() user: User) {
+    const event = await this.eventsService.findOne(id);
 
     if (!event) {
       throw new NotFoundException();
